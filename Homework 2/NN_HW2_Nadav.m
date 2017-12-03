@@ -24,6 +24,7 @@ for ii = 1:100
 end
 contour(X,Y,Z)
 hold on
+% Find optimal Decision Boundary
 w = S^-1*(mu1-mu2);
 x0 = 0.5*(mu1+mu2);
 n = cross([0 0 1].',[w;0]);
@@ -33,7 +34,6 @@ plot([p1(1),p2(1)],[p1(2),p2(2)],'--m','Linewidth',2)
 xlim([-2 2]);ylim([-2 2]);
 legend('Probability Difference','Optimal Decision Boundary','Location','Southwest')
 axis equal
-
 R1 = mvnrnd(mu1, S, 1000);
 R2 = mvnrnd(mu2, S, 1000);
 % Distributions estimation
