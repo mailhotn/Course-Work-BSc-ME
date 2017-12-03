@@ -67,6 +67,28 @@ SIGMA = [0.65 0.35;
 R1 = mvnrnd(mu1, SIGMA, 1000);
 R2 = mvnrnd(mu2, SIGMA, 1000);
 
+x = linspace(-2,2,100);
+y = linspace(-2,2,100);
+[X, Y] = meshgrid(x,y);
+Z = [];
+for ii = 1:100
+    z1 = mvnpdf([x(ii)*ones(100,1) Y(:,ii)],mu1.',S);
+    z2 = mvnpdf([x(ii)*ones(100,1) Y(:,ii)],mu2.',S);
+    Z = [Z (z1-z2)];
+end
+contour(X,Y,Z)
+hold on
+% Find optimal Decision Boundary
+w = Sigma^-1*(mu1-mu2);
+x0 = 0.5*(mu1+mu2);
+n = cross([0 0 1].',[w;0]);
+n = n(1:2)/norm(n);
+p1 = x0-n*3; p2 = x0+n*3;
+plot([p1(1),p2(1)],[p1(2),p2(2)],'--m','Linewidth',2)
+xlim([-2 2]);ylim([-2 2]);
+legend('Probability Difference','Optimal Decision Boundary','Location','Southwest')
+axis equal
+
 % Distributions estimation
 muhat1 = 1/length(R1)*sum(R1);
 muhat2 = 1/length(R2)*sum(R2);
@@ -74,12 +96,19 @@ Sigmahat1 = zeros(2);
 Sigmahat2 = zeros(2);
 
 % Assuming R1 and R2 have the same length, covariance matrix estimation
-for ii = 1:length(R1)
-    Sigmahat1 = Sigmahat1 + (R1(ii,:) - muhat1).'*(R1(ii,:) - muhat1);
-    Sigmahat2 = Sigmahat2 + (R2(ii,:) - muhat2).'*(R2(ii,:) - muhat2);
-end
-Sigmahat1 = Sigmahat1/(length(R1)-1);
-Sigmahat2 = Sigmahat2/(length(R2)-1);
+Sigmahat1 = (R1-murep1).'*(R1-murep1)/999;
+Sigmahat2 = (R2-murep2).'*(R2-murep2)/999;
+
+% Optimal Decision Based on Estimates
+Sigmahat = (Sigmahat1+Sigmahat2)/2;
+w = Sigmahat^-1*(muhat1-muhat2);
+x0 = 0.5*(muhat1+muhat2);
+n = cross([0 0 1].',[w;0]);
+n = n(1:2)/norm(n);
+p1 = x0-n*3; p2 = x0+n*3;
+plot([p1(1),p2(1)],[p1(2),p2(2)],'--r','Linewidth',2)
+xlim([-2 2]);ylim([-2 2]);
+hold off
 
 plot(R1(:,1),R1(:,2),'r^',R2(:,1),R2(:,2),'bv');
 hold on
