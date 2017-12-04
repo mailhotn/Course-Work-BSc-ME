@@ -1,9 +1,13 @@
 %% Q2
+
+% init parameters
 mu = [0.5 0.5];
 Sigma = [0.1 0.05;
     0.05 0.1];
 x1 = -1:.03:2; x2 = x1;
 [X1, X2] = meshgrid(x1,x2);
+
+% calculate the pdf of each point, then plot
 Fw2 = mvnpdf([X1(:), X2(:)], mu, Sigma);
 Fw2 = reshape(Fw2, length(x2), length(x1));
 figure()
@@ -28,12 +32,15 @@ xlabel('x_{1}'); ylabel('x_{2}'); zlabel('Probability Density');
 [V, D] = eig(Sigma);
 Aw = V*D^(-1/2);
 muw = Aw.'*mu.';
+
 % check that whitened sigma is the identity matrix
 Sigmaw = Aw.'*Sigma*Aw; 
 vertices = [0 1 1 0; 0 0 1 1];
 transformed_vertices = Aw.'*vertices;
-% find the new polygon's area 
+
+% find the new polygon's area (which is the new 1/pdf of the uniform dist)
 A = polyarea(transformed_vertices(1,:),transformed_vertices(2,:));
+
 % plot everything
 x1 = -4:.1:4; x2 = -2.2:.1:6;
 [X1, X2] = meshgrid(x1,x2);
@@ -61,7 +68,7 @@ xlabel('x_{1}'); ylabel('x_{2}'); zlabel('Probability Density');
 
 %% Q3
 %-------------------------------------------------------------------------%
-%                      Optimal decision boundary
+%                      optimal desicion boundary
 %-------------------------------------------------------------------------%
 clear all %#ok
 mu1 = zeros(2,1); mu2 = [0.75 0.5].';
@@ -77,12 +84,14 @@ Z = [];
 for ii = 1:100
     z1 = mvnpdf([x(ii)*ones(100,1) Y(:,ii)],mu1.',SIGMA);
     z2 = mvnpdf([x(ii)*ones(100,1) Y(:,ii)],mu2.',SIGMA);
-    Z = [Z (z1-z2)];
+    Z = [Z (z1-z2)]; %#ok
 end
 figure()
 contour(X,Y,Z)
 hold on
-% Find optimal Decision Boundary
+
+% Find optimal Decision Boundary (using the formulas derived in the lecture
+% notes)
 w = SIGMA^-1*(mu1-mu2);
 x0 = 0.5*(mu1+mu2);
 n = cross([0 0 1].',[w;0]);
@@ -93,7 +102,7 @@ xlim([-2 2]);ylim([-2 2]);
 axis equal
 
 %-------------------------------------------------------------------------%
-%               Optimal desicion boundary based on estimation
+%               optimal desicion boundary based on estimation
 %-------------------------------------------------------------------------%
 
 % Distributions estimation
@@ -108,6 +117,8 @@ Sigmahat2 = (R2-murep2).'*(R2-murep2)/999;
 
 % Optimal Decision Based on Estimates
 Sigmahat = (Sigmahat1+Sigmahat2)/2;
+% sigmahat1 ~= sigmahat2 but close, therefore take the mean (we are asked
+% to assume that they are equal)
 w = Sigmahat^-1*(muhat1.'-muhat2.');
 x0 = 0.5*(muhat1.'+muhat2.');
 n = cross([0 0 1].',[w;0]);
@@ -115,9 +126,9 @@ n = n(1:2)/norm(n);
 p1 = x0-n*3; p2 = x0+n*3;
 plot([p1(1),p2(1)],[p1(2),p2(2)],'--r','Linewidth',2)
 xlim([-2 2]);ylim([-2 2]);
-legend('Probability Difference','Optimal Decision Boundary','Estimated Decision Boundary','Location','Southwest')
+legend('Probability Difference','Optimal Decision Boundary',...
+    'Estimated Decision Boundary','Location','Southwest')
 hold off
-
 figure()
 plot(R1(:,1),R1(:,2),'r^',R2(:,1),R2(:,2),'bv');
 hold on
@@ -128,7 +139,7 @@ hold on
 [X, Y] = meshgrid(linspace(-4,4,100), linspace(-4,4,100));
 X = X(:); Y = Y(:);
 group = [ones(length(R1),1); 2*ones(length(R2),1)];
-[C, err, P, logp, coeff] = classify([X, Y], [R1; R2], group, 'linear'); 
+[C, err, ~, logp, coeff] = classify([X, Y], [R1; R2], group, 'linear'); 
 K = coeff(1,2).const;
 L = coeff(1,2).linear;
 % plot stuff
@@ -144,6 +155,7 @@ hold off
 %-------------------------------------------------------------------------%
 %                       classification using NN
 %-------------------------------------------------------------------------%
+
 P = [R1;R2].';
 T = [ones(1000,1); zeros(1000,1)].';
 net = newp([0 1; -2 2],1,'hardlim','learnwh');
@@ -167,35 +179,33 @@ plot(P_Err,'--o')
 ylabel('Sum Square Error')
 xlabel('Epoch')
 
-%% Boundary validation
-[vA, vB] = RandInRing(10,6,1,3000);
-vP = [vA; vB].';
-vT = [ones(3000,1); zeros(3000,1)].';
-y = net(vP);
-MD = 0; FA = 0;
-MDind = []; FAind = [];
-for ii = 1:length(y)
-    switch y(ii) - vT(ii)
-        case 1
-            MD = MD + 1;
-            MDind = [MDind; ii]; %#ok
-        case -1
-            FA = FA + 1;
-            FAind = [FAind; ii]; %#ok
-    end
-end
-figure()
-plot(A(:,1), A(:,2), 'bo', B(:,1), B(:,2), 'rx');
-hold on
-legendstr = {'C1', 'C2'};
-if ~isempty(FAind)
-    plot(vP(1,FAind), vP(2,FAind),'ms', 'linewidth', 2);
-    legendstr = [legendstr, 'False Alarm'];
-end
-if ~isempty(MDind)
-    plot(vP(1,MDind), vP(2,MDind), 'gd', 'linewidth', 2)
-    legendstr = [legendstr, 'Miss-detection'];
-end
-legend(legendstr);
-plotpc(net.IW{1},net.b{1});
-hold off
+%-------------------------------------------------------------------------%
+%                               verification
+%-------------------------------------------------------------------------%
+
+R1 = mvnrnd(mu1, SIGMA, 2000);
+R2 = mvnrnd(mu2, SIGMA, 2000);
+T = [ones(2000,1); -ones(2000,1)];
+% because the covariance matrices are equal, the boundary is linear;
+% therefore, in order to classify, we can use sign(v(x)) where v(x) =
+% dot(w,x) + bias (just like a regular perceptron)
+
+w_perceptron      = net.IW{1};          % Q3.d
+b_perceptron      = net.b{1};
+w_classifyFunc    = L.';                % Q3.c
+b_classifyFunc    = K;
+w_classifyOptimal = (w./norm(w)).';     % Q3.b
+b_classifyOptimal = norm(x0);
+
+y_perceptron      = sign([R1; R2]*w_perceptron.' + repmat(b_perceptron,4000,1));
+y_classifyFunc    = sign([R1; R2]*w_classifyFunc.' + repmat(b_classifyFunc,4000,1));
+y_classifyOptimal = sign([R1; R2]*w_classifyOptimal.' + repmat(b_classifyOptimal,4000,1));
+
+sse_perceptron      = (T - y_perceptron).'*(T - y_perceptron);
+sse_classifyFunc    = (T - y_classifyFunc).'*(T - y_classifyFunc);
+sse_classifyOptimal = (T - y_classifyOptimal).'*(T - y_classifyOptimal);
+
+disp(['SSE of Peceptron is ' num2str(sse_perceptron)]);
+disp(['SSE of Classify function is ' num2str(sse_classifyFunc)]);
+disp(['SSE of Optimal classification formula is ' num2str(sse_classifyOptimal)]);
+
