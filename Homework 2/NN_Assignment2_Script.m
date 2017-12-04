@@ -68,7 +68,7 @@ xlabel('x_{1}'); ylabel('x_{2}'); zlabel('Probability Density');
 
 %% Q3
 %-------------------------------------------------------------------------%
-%                      optimal desicion boundary
+%                   optimal decision boundary (Q3.a)
 %-------------------------------------------------------------------------%
 clear all %#ok
 mu1 = zeros(2,1); mu2 = [0.75 0.5].';
@@ -102,7 +102,7 @@ xlim([-2 2]);ylim([-2 2]);
 axis equal
 
 %-------------------------------------------------------------------------%
-%               optimal desicion boundary based on estimation
+%            optimal desicion boundary based on estimation (Q3.b)
 %-------------------------------------------------------------------------%
 
 % Distributions estimation
@@ -129,13 +129,14 @@ xlim([-2 2]);ylim([-2 2]);
 legend('Probability Difference','Optimal Decision Boundary',...
     'Estimated Decision Boundary','Location','Southwest')
 hold off
+
+
+%-------------------------------------------------------------------------%
+%            classification using statistical approach (Q3.c)                
+%-------------------------------------------------------------------------%
 figure()
 plot(R1(:,1),R1(:,2),'r^',R2(:,1),R2(:,2),'bv');
 hold on
-
-%-------------------------------------------------------------------------%
-%               classification using statistical approach                  
-%-------------------------------------------------------------------------%
 [X, Y] = meshgrid(linspace(-4,4,100), linspace(-4,4,100));
 X = X(:); Y = Y(:);
 group = [ones(length(R1),1); 2*ones(length(R2),1)];
@@ -143,17 +144,18 @@ group = [ones(length(R1),1); 2*ones(length(R2),1)];
 K = coeff(1,2).const;
 L = coeff(1,2).linear;
 % plot stuff
-gscatter(X,Y,C,'rb','.',3,'off');
+% gscatter(X,Y,C,'rb','.',3,'off');
 f = @(x,y) K + [x y]*L;
 h2 = ezplot(f,[-4 4 -4 4]);
 set(h2,'Color','m','LineWidth',2);
 axis([-4 4 -4 4]);
 title('');
 xlabel('x_{1}'); ylabel('x_{2}');
+legend('C1', 'C2');
 hold off
 
 %-------------------------------------------------------------------------%
-%                       classification using NN
+%                    classification using NN (Q3.d)
 %-------------------------------------------------------------------------%
 
 P = [R1;R2].';
@@ -169,9 +171,9 @@ for ii = 1:50
 end
 figure();
 plot(R1(:,1), R1(:,2), 'r^', R2(:,1), R2(:,2), 'bv');
-legendstr = {'C1', 'C2'};
-legend(legendstr);
-plotpc(net.IW{1},net.b{1});
+legend('C1', 'C2');
+h3 = plotpc(net.IW{1},net.b{1});
+set(h3,'Color','m','LineWidth',2);
 xlabel('x_1')
 ylabel('x_2')
 figure()
@@ -180,7 +182,7 @@ ylabel('Sum Square Error')
 xlabel('Epoch')
 
 %-------------------------------------------------------------------------%
-%                               verification
+%                          verification (Q3.e)
 %-------------------------------------------------------------------------%
 
 R1 = mvnrnd(mu1, SIGMA, 2000);
@@ -190,6 +192,7 @@ T = [ones(2000,1); -ones(2000,1)];
 % therefore, in order to classify, we can use sign(v(x)) where v(x) =
 % dot(w,x) + bias (just like a regular perceptron)
 
+% define the vector perpendicular to the boundary
 w_perceptron      = net.IW{1};          % Q3.d
 b_perceptron      = net.b{1};
 w_classifyFunc    = L.';                % Q3.c
@@ -197,10 +200,12 @@ b_classifyFunc    = K;
 w_classifyOptimal = (w./norm(w)).';     % Q3.b
 b_classifyOptimal = norm(x0);
 
+% classify the groups
 y_perceptron      = sign([R1; R2]*w_perceptron.' + repmat(b_perceptron,4000,1));
 y_classifyFunc    = sign([R1; R2]*w_classifyFunc.' + repmat(b_classifyFunc,4000,1));
 y_classifyOptimal = sign([R1; R2]*w_classifyOptimal.' + repmat(b_classifyOptimal,4000,1));
 
+% get error
 sse_perceptron      = (T - y_perceptron).'*(T - y_perceptron);
 sse_classifyFunc    = (T - y_classifyFunc).'*(T - y_classifyFunc);
 sse_classifyOptimal = (T - y_classifyOptimal).'*(T - y_classifyOptimal);
@@ -208,6 +213,19 @@ sse_classifyOptimal = (T - y_classifyOptimal).'*(T - y_classifyOptimal);
 disp(['SSE of Peceptron is ' num2str(sse_perceptron)]);
 disp(['SSE of Classify function is ' num2str(sse_classifyFunc)]);
 disp(['SSE of Optimal classification formula is ' num2str(sse_classifyOptimal)]);
+
+% plot
+figure()
+plot(R1(:,1),R1(:,2),'r^',R2(:,1),R2(:,2),'bv');
+hold on
+h1 = plot([p1(1),p2(1)],[p1(2),p2(2)],'g','Linewidth',2);
+f = @(x,y) K + [x y]*L;
+h2 = ezplot(f,[-4 4 -4 4]);
+set(h2,'Color','c','LineWidth',2,'linestyle','--');
+h3 = plotpc(net.IW{1},net.b{1});
+set(h3,'Color','m','LineWidth',2);
+title(''); legend('C1','C2','Optimal classification formula','Classify function',...
+    'Perceptron');
 
 %% Q4 Bayesian Classification On Half-Rings
 [A, B] = RandInRing(10,6,1,1000);
