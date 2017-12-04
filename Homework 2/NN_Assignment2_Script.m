@@ -209,3 +209,65 @@ disp(['SSE of Peceptron is ' num2str(sse_perceptron)]);
 disp(['SSE of Classify function is ' num2str(sse_classifyFunc)]);
 disp(['SSE of Optimal classification formula is ' num2str(sse_classifyOptimal)]);
 
+%% Q4 Bayesian Classification On Half-Rings
+[A, B] = RandInRing(10,6,1,1000);
+%-------------------------------------------------------------------------%
+%               classification using statistical approach                  
+%-------------------------------------------------------------------------%
+[X, Y] = meshgrid(linspace(-20,30,1000), linspace(-20,20,1000));
+X = X(:); Y = Y(:);
+group = [ones(length(A),1); 2*ones(length(B),1)];
+[~, ~, ~, ~, coeff] = classify([X, Y], [A; B], group, 'linear'); 
+w0_B = coeff(1,2).const;
+w_B = coeff(1,2).linear;
+
+%-------------------------------------------------------------------------%
+%                       classification using NN
+%-------------------------------------------------------------------------%
+X = [ones(1000,1),A;
+    ones(1000,1),B].';
+T = [ones(1000,1);-ones(1000,1)].';
+w_n = 1.5*rand(3,1)-ones(3,1);
+Jp = Inf;
+e = zeros(2000,1).';
+eta = 1e-3;
+while Jp(end) > 0
+    ni = w_n.'*X;
+    u = sign(ni);
+    e = T-u;
+    dw = eta*e*X.';
+    Jp = [Jp, -0.5*ni*e.']; %#ok
+    w_n = w_n + dw.';
+end
+
+%-------------------------------------------------------------------------%
+%                       Testing the Classifiers
+%-------------------------------------------------------------------------%
+[A, B] = RandInRing(10,6,1,1000);
+X = [A;B].';
+T = [ones(1000,1);-ones(1000,1)].';
+u_B = sign(w_B.'*X + w0_B);
+E_B = (T-u_B)*(T-u_B).';
+u_n = sign(w_n(2:3).'*X + w_n(1));
+E_n = (T-u_n)*(T-u_n).';
+
+% Plot Stuff
+figure()
+e_B = T-u_B;
+C1good = find(e_B(1:1000) == 0);
+plot(A(C1good,1),A(C1good,2),'bo')
+hold on
+FAv = find(e_B(1:1000) == 2);
+plot(A(FAv,1),A(FAv,2),'ms')
+C2good = find(e_B(1001:2000) == 0);
+plot(B(C2good,1),B(C2good,2),'rx')
+MDv = find(e_B(1001:2000) == -2);
+plot(B(MDv,1),B(MDv,2),'g*')
+plotpc(w_B.',w0_B(1))
+axis([-20 30 -20 20])
+axis equal
+grid on
+xlabel('x_1')
+ylabel('x_2')
+legend('C_1','False Alarm','C_2','Misdetection','Decision Boundary')
+hold off
