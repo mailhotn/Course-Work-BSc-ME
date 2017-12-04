@@ -61,7 +61,7 @@ xlabel('x_{1}'); ylabel('x_{2}'); zlabel('Probability Density');
 
 %% Q3
 %-------------------------------------------------------------------------%
-%                      Optimal desicion boundary
+%                      Optimal decision boundary
 %-------------------------------------------------------------------------%
 clear all %#ok
 mu1 = zeros(2,1); mu2 = [0.75 0.5].';
@@ -144,32 +144,30 @@ hold off
 %-------------------------------------------------------------------------%
 %                       classification using NN
 %-------------------------------------------------------------------------%
-[A, B] = RandInRing(10,6,1,1000);
-P = [A; B].';
+P = [R1;R2].';
 T = [ones(1000,1); zeros(1000,1)].';
-figure()
-plotpv(P,T)
-net = perceptron;
-linehandle = plotpc(net.IW{1},net.b{1});
-E = 1;
-perf = [];
-ii = 1;
-while (sse(E))
-    ii = ii + 1;
-    [net,Y,E,~,~,tr] = adapt(net,P,T);
-    perf(1,ii) = tr.perf; %#ok
-    linehandle = plotpc(net.IW{1},net.b{1},linehandle);
-    drawnow;
+net = newp([0 1; -2 2],1,'hardlim','learnwh');
+P_Err = [];
+lr = linspace(0.1,1e-5,50);
+for ii = 1:50
+    net.inputWeights{1}.learnParam.lr = lr(ii);
+    net.Biases{1}.learnParam.lr = lr(ii);
+    [net,Y,E] = adapt(net,P,T);
+    P_Err = [P_Err, E*E.']; %#ok
 end
 figure();
-plot(A(:,1), A(:,2), 'bo', B(:,1), B(:,2), 'rx');
+plot(R1(:,1), R1(:,2), 'r^', R2(:,1), R2(:,2), 'bv');
 legendstr = {'C1', 'C2'};
 legend(legendstr);
 plotpc(net.IW{1},net.b{1});
-figure();
-plot(1:ii, perf, '--o');
-xlabel('Epoch'); ylabel('Performance (MSE)');
-% Boundary validation
+xlabel('x_1')
+ylabel('x_2')
+figure()
+plot(P_Err,'--o')
+ylabel('Sum Square Error')
+xlabel('Epoch')
+
+%% Boundary validation
 [vA, vB] = RandInRing(10,6,1,3000);
 vP = [vA; vB].';
 vT = [ones(3000,1); zeros(3000,1)].';
