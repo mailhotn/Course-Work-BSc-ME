@@ -61,33 +61,29 @@ w_free = V_max/K_t;
 N = [1 3 5 7].';
 eta = [0.98 0.95 0.9 0.88].';
 
-% plot Graphs
+% Q1 plot Graphs
 X = [zeros(4,1) w_free*[1/1 1/3 1/5 1/7].'].';
 Y = [T_stall*N.*eta zeros(4,1)].';
-figure()
+figure(1)
 plot(X,Y,0,T_dist,'b*')
-hold on
+legend('Gear 1','Gear 2','Gear 3','Gear 4','T_{d}')
+xlabel('\omega [rad/s]')
+ylabel('T [Nm]')
 
-% Get Working Point
+% Q2 Chosen Gear
 gear = 2;
-s1 = (Y(2,gear)-Y(1,gear))/(X(2,gear)-X(1,gear));
-d1 = Y(1,gear);
-s2 = -1/s1;
-d2 = T_dist;
-w_work = (d2-d1)/(s1-s2);
-T_work = s1*w_work + d1;
-plot(w_work,T_work,'*r')
-hold off
-% Design Controller
-c_eta = (1-eta(gear))*T_work/w_work;
-P = feedback(1/R*K_t*N(gear)*tf(1,[J c_eta]),N(gear)*K_t)*tf(1,[1 0]);
+
+% Q3 Plant
+P = feedback(1/R*K_t*N(gear)*tf(1,[J 0]),N(gear)*K_t)*tf(1,[1 0]);
+% Q4 Design Controller
 % sisotool(P)
 load Q2_C
-figure()
+figure(2)
 bode(C*P)
+title('')
 
 % Q5 Step Response
-figure()
+figure(3)
 step(feedback(C*P,1),feedback(C,P))
 legend('Angle [rad]','Control Effort [v]')
 
@@ -97,35 +93,50 @@ max_step = 20/u_info.Peak*180/pi;
 
 % Q8 Complete Simulation w/o Friction
 load_system('Q2_Model');
-set_param('Q2_Model','StopTime','100','AbsTol','1e-10','RelTol','1e-10');
+set_param('Q2_Model','StopTime','40','AbsTol','1e-10','RelTol','1e-10');
 % Simulation Parameters
 D_v = 0;
 T_sl = 0;
 T_st = 0;
 V_max = 20;
 Step_Height = 0;
-ddx_height = 1;
-ddx_width = 30/ddx_height/3;
+ddx_height = 5;
+ddx_width = dx_max/ddx_height;
 sim('Q2_Model');
-figure(); plot(Output.time, Output.signals.values,Output1.time, Output1.signals.values);
-% figure(); plot(Output2.time, Output2.signals.values) % Cart Velocity
+figure(4); plot(Output.time, Output.signals.values,Output1.time, Output1.signals.values);
 info = stepinfo(Output.signals.values,Output.time,pi,'SettlingTimeThreshold',0.05);
+legend('\theta [rad]','u [v]')
+xlabel('Time [sec]')
+ylabel('Magnitude')
 
 % Q9 Complete Simulation with Friction
 load_system('Q2_Model');
-set_param('Q2_Model','StopTime','30','AbsTol','1e-10','RelTol','1e-10');
+set_param('Q2_Model','StopTime','40','AbsTol','1e-10','RelTol','1e-10');
 % Simulation Parameters
-D_v = 1e-2;
+D_v = 1e-3;
 T_sl = 2;
 T_st = 2.6;
 V_max = 20;
 Step_Height = 0;
-ddx_height = 5;
-ddx_width = 30/ddx_height;
+ddx_height = 1;
+ddx_width = 5/ddx_height;
 sim('Q2_Model');
-figure(); plot(Output.time, Output.signals.values,Output1.time, Output1.signals.values);
+figure(6); plot(Output.time, Output.signals.values);
 % figure(); plot(Output2.time, Output2.signals.values) % Cart Velocity
 info = stepinfo(Output.signals.values,Output.time,pi,'SettlingTimeThreshold',0.05);
+hold on
+load_system('Q2_Model');
+set_param('Q2_Model','StopTime','40','AbsTol','1e-10','RelTol','1e-10');
+% Simulation Parameters
+D_v = 1e-1;
+sim('Q2_Model');
+plot(Output.time, Output.signals.values);
+% figure(); plot(Output2.time, Output2.signals.values) % Cart Velocity
+info = stepinfo(Output.signals.values,Output.time,pi,'SettlingTimeThreshold',0.05);
+legend('D_v = 0.001','D_v = 0.1')
+xlabel('Time [sec]')
+ylabel('\theta [rad]')
+hold off
 
 %% Q3 - Servo motor control
 
