@@ -101,7 +101,7 @@ T_st = 0;
 V_max = 20;
 Step_Height = 0;
 ddx_height = 5;
-ddx_width = dx_max/ddx_height;
+ddx_width = dx_max*3/ddx_height;
 sim('Q2_Model');
 figure(4); plot(Output.time, Output.signals.values,Output1.time, Output1.signals.values);
 info = stepinfo(Output.signals.values,Output.time,pi,'SettlingTimeThreshold',0.05);

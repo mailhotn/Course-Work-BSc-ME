@@ -1,11 +1,8 @@
 
 *.m~
-<<<<<<< Updated upstream
 
 *.asv
-=======
-
-*.asv
->>>>>>> Stashed changes
 
 *.autosave
+
+*.original
