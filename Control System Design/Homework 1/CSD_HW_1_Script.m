@@ -191,7 +191,7 @@ for ii = 1:2
     B = [0 Kt/(R*Jm) 0 0].';
     C = [0 0 0 1]; % here C gives angular velocity
     D = 0;
-    P = ss(A,B,C,D);
+    P = minreal(tf(ss(A,B,C,D)));
     load('C.mat');
     [Gm, Pm, Wgm, Wpm] = margin(C*P) %#ok
     figure(); step(pi/2*feedback(C*P,1));
@@ -202,7 +202,7 @@ for ii = 1:2
     B = [0 Kt/(R*Jm) 0 0].';
     C = [0 0 1 0]; % here C gives angle
     D = 0;
-    P = ss(A,B,C,D);
+    P = minreal(tf(ss(A,B,C,D)));
     load('C_PI.mat');
     [Gm, Pm, Wgm, Wpm] = margin(C*P) %#ok
     figure(); step(pi/6*feedback(C*P,1));
