@@ -1,4 +1,4 @@
-%% Q1 - Fly
+    %% Q1 - Fly
 m = 0.001;
 k = 0.2e6;
 c = 2;
@@ -156,7 +156,7 @@ d    = 5*pi/180;   % [rad]
 %-------------------------------------------------------------------------%
 
 % angular velocity control
-P = tf(1/(N*Kt), [R*(Jl + Jm)/(N^2*Kt^2), R*c/(N^2*Kt^2) + 1]);
+P = tf(1/(N*Kt), [R*(Jl + N^2*Jm)/(N^2*Kt^2), R*c/(N^2*Kt^2) + 1]);
 load('C.mat');
 L = C*P;
 % sisotool(C*P); % design controller (OS < 20 %)
@@ -167,7 +167,7 @@ maxReference = 1/(S_controlSig.Peak)*180/pi %#ok %[deg/sec]
 figure(); step(feedback(L,1)*pi/2);
 
 % angle control
-P = tf(1/(N*Kt), [R*(Jl + Jm)/(N^2*Kt^2), R*c/(N^2*Kt^2) + 1, 0]);
+P = tf(1/(N*Kt), [R*(Jl + N^2*Jm)/(N^2*Kt^2), R*c/(N^2*Kt^2) + 1, 0]);
 % sisotool(P); % design controller (PM > 70)
 load('C_PI.mat');
 L = C*P;
