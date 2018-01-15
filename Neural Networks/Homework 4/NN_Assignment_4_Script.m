@@ -72,7 +72,8 @@ for ii = 1:length(y)
         end
     end
 end
-contour(xx,yy,zz)
+colormap([0 0 0; 0 0 0])
+contour(xx,yy,zz,1,'Linewidth',2)
 plot(A_train(:,1),A_train(:,2),'bo',B_train(:,1),B_train(:,2),'rx')
 % for x=-20:1:30
 % 	for y=-20:1:20
