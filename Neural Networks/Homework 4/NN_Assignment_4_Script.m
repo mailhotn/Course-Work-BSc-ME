@@ -10,6 +10,27 @@ T_val = [ones(1,500), zeros(1,500);
          zeros(1,500),ones(1,500)];
 
 [A_test, B_test] = RandInRing(10,6,-4,1000);
+
+
+%% Question 2 - PCA
+load('home21_dat.mat');
+samples = data(:,1:end-1);
+T       = data(:,end);
+A       = zscore(samples);
+
+% PCA using SVD
+[U,S,~] = svd(A);
+s       = diag(S);
+
+for ii = 1:10
+    sums(ii) = sum(s(1:ii).^2); %#ok
+end
+figure(); plot(1:10, s.^2/(sum(s.^2)),'o');
+xlabel('\sigma_{i}'); ylabel('Proportion of Total Variation');
+figure(); plot(1:10, sums,'o');
+xlabel('\sigma_{i}'); ylabel('Sum of Variations');
+
+
 X_test = [A_test; B_test];
 T_test = [ones(1,1000), zeros(1,1000);
           zeros(1,1000), ones(1,1000)];
