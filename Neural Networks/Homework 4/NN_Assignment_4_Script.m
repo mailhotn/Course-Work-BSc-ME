@@ -12,23 +12,6 @@ T_val = [ones(1,500), zeros(1,500);
 [A_test, B_test] = RandInRing(10,6,-4,1000);
 
 
-%% Question 2 - PCA
-load('home21_dat.mat');
-samples = data(:,1:end-1);
-T       = data(:,end);
-A       = zscore(samples);
-
-% PCA using SVD
-[U,S,~] = svd(A);
-s       = diag(S);
-
-for ii = 1:10
-    sums(ii) = sum(s(1:ii).^2); %#ok
-end
-figure(); plot(1:10, s.^2/(sum(s.^2)),'o');
-xlabel('\sigma_{i}'); ylabel('Proportion of Total Variation');
-figure(); plot(1:10, sums,'o');
-xlabel('\sigma_{i}'); ylabel('Sum of Variations');
 
 
 X_test = [A_test; B_test];
@@ -104,3 +87,34 @@ plot(A_train(:,1),A_train(:,2),'bo',B_train(:,1),B_train(:,2),'rx')
 % 	end
 % end
 hold off
+
+%% Question 2 - PCA
+load('home21_dat.mat');
+samples = data(:,2:end);
+T       = [data(:,1).';
+    1 - data(:,1).'];
+A       = zscore(samples);
+
+% PCA using SVD
+[U,S,~] = svd(A,'econ');
+s       = diag(S);
+
+for ii = 1:10
+    sums(ii) = sum(s(1:ii).^2); %#ok
+end
+figure(); plot(1:10, s.^2/(sum(s.^2)),'--o',1:10, sums/sum(s.^2),'--o');
+xlabel('\sigma_{i}'); ylabel('%Variance and accumulated %Variance');
+legend('%Variance','accumulated %Variance');
+
+
+
+% classification using some of the data
+[coeff, score, latent] = pca(A);
+for ii = 1:10
+    net      = patternnet(2);
+    net.performFcn = 'sse';
+    [net,tr] = train(net,(score(:,1:ii)).',T);
+    best(ii) = tr.best_vperf; %#ok
+end
+figure; plot(1:10, best, 'o');
+xlabel('PC index'); ylabel('Validation Group best SSE');
