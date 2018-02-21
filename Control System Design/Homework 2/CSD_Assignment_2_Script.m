@@ -1,4 +1,5 @@
-%% Question 1 - Part a
+%% Question 1
+%Part a
 P = tf(1,[0.064, 0.02, 1.176]);
 Ci = tf([1, 4.95, 2.2],[0.025,1,0]);
 % sisotool(Ci*P)
@@ -8,44 +9,42 @@ bode(C*P)
 figure(2)
 step(feedback(P,C))
 
-%% Question 1 - Part b
+%Part b
 figure(1)
 bode(feedback(C*P,1))
 fb = 4.42/2*pi;
 ts = 1/(2.2*fb);
 
-%% Question 1 - Part c
+%Part c
 % Equivalent Delay
 h_eq = ts/2;
 P1 = P;
 P1.inputdelay = h_eq;
 figure(1)
-step(feedback(P,C),'-b',feedback(P1,C),'-r')
+step(feedback(P,C),'-b',feedback(P1,C),'-r',0:ts:180)
 
 % Discrete Time
 P2 = c2d(P,ts);
 Cd = c2d(C,ts,'tustin');
 figure(2)
-step(feedback(P,C),'-b',feedback(P2,Cd),'-r')
+step(feedback(P,C),'-b',feedback(P2,Cd),'-r',0:ts:180)
 
 % Multi-Rate Simulation
-load_system('Q2_Part_c');
-set_param('Q2_Part_c','StopTime','180','AbsTol','1e-10','RelTol','1e-10');
-sim('Q2_Part_c');
+load_system('Q1_Part_c');
+set_param('Q1_Part_c','StopTime','180','AbsTol','1e-10','RelTol','1e-10');
+sim('Q1_Part_c');
 figure(3)
+step(feedback(P,C),'-b',0:ts:180)
 hold on
-step(feedback(P,C),'-b')
 plot(Output.time, Output.signals.values,'-r');
 hold off
 
-% Anti-aliasing filter
-N  = 2;
-R  = 20;        % [dB]
-ws = 2*pi/ts;   % [rad/sec]
-
-[z, p, k] = cheby2(N,R,ws,'s');
+%Part d Anti - Aliasing
+wn = pi/ts;
 F = zpk(z,p,k);
-
+[z,p,k] = cheby2(2,20,wn,'s');
+figure(1)
+step(feedback(P,C),feedback(P,C*F),0:ts/10:180)
 %% Question 2
 enc_res = 0.005; % encoder resolution
 Kt = 0.46;  % [Nm/A]
@@ -54,6 +53,7 @@ Jl = 0.025; % [kgm^2]
 Ke = Kt;
 tau_m = Jl*R/(Kt*Ke);
 P  = 1/Ke*tf(1, [tau_m 1]);
+load('Q2Cp.mat');
 
 wb  = 150; % [rad/sec]
 Cpi = P^-1*wb*tf(1, [1 0]);
@@ -88,3 +88,12 @@ set_param('Q2_b2','StopTime','2','AbsTol','1e-10','RelTol','1e-10');
 sim('Q2_b2');
 figure(); plot(cscdOut.time, cscdOut.signals(1).values,...
     cscdOut.time, cscdOut.signals(2).values);
+
+% Controller designed directly
+load_system('Q2_Part_b3');
+load('Q2_a3_C.mat');
+sim('Q2_Part_b3');
+set_param('Q2_Part_b3','StopTime','1','AbsTol','1e-8','RelTol','1e-8');
+figure()
+plot(Sim_Out_y.time, Sim_Out_y.signals.values,...
+    Sim_Out_u.time, Sim_Out_u.signals.values);
