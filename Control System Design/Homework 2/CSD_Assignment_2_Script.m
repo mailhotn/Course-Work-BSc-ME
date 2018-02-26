@@ -21,13 +21,27 @@ h_eq = ts/2;
 P1 = P;
 P1.inputdelay = h_eq;
 figure(1)
-step(feedback(P,C),'-b',feedback(P1,C),'-r',0:ts:180)
+step(feedback(P,C),'-b',feedback(P1,C),'-r',0:ts:180);
 
 % Discrete Time
 P2 = c2d(P,ts);
 Cd = c2d(C,ts,'tustin');
 figure(2)
-step(feedback(P,C),'-b',feedback(P2,Cd),'-r',0:ts:180)
+step(feedback(P,C),'-b',feedback(P2,Cd),'-r',0:ts:180);
+
+candidate_ts = [];
+for ts_s = linspace(9*ts, 10*ts, 1000)
+    P2 = c2d(P,ts_s);
+    Cd = c2d(C,ts_s,'tustin');
+    info = stepinfo(feedback(P2,Cd));
+    if info.Peak > 10
+        disp('Found one');
+        candidate_ts = [candidate_ts, ts_s]; %#ok
+        step(feedback(P2,Cd));
+        pause;
+    end
+end
+
 
 % Multi-Rate Simulation
 load_system('Q1_Part_c');
@@ -39,12 +53,31 @@ hold on
 plot(Output.time, Output.signals.values,'-r');
 hold off
 
+% change the sampling time of "Rate Transition" block to ts_s
+candidate_ts = [];
+for ts_s = linspace(10.5*ts, 11*ts, 500)
+    sim('Q1_Part_c');
+    info = stepinfo(Output.signals.values, Output.time);
+    if info.Peak > 10
+        disp('Found one');
+        candidate_ts = [candidate_ts, ts_s]; %#ok
+        plot(Output.time, Output.signals.values,'-r');
+        pause;
+    end
+end
+
 %Part d Anti - Aliasing
 wn = pi/ts;
-F = zpk(z,p,k);
 [z,p,k] = cheby2(2,20,wn,'s');
-figure(1)
-step(feedback(P,C),feedback(P,C*F),0:ts/10:180)
+F = zpk(z,p,k);
+load_system('Q1_Part_d');
+set_param('Q1_Part_d','StopTime','180','AbsTol','1e-10','RelTol','1e-10');
+sim('Q1_Part_d');
+figure();
+step(feedback(P,C),'-b',1:ts/100:180)
+hold on
+plot(Output.time, Output.signals.values,'-r');
+hold off
 %% Question 2
 enc_res = 0.005; % encoder resolution
 Kt = 0.46;  % [Nm/A]
@@ -101,15 +134,16 @@ plot(Sim_Out_y.time, Sim_Out_y.signals.values,...
 %% Question 3
 
 K_Fa = 2.16e5;
-K_Fd = -5.4e4;
+K_Fd = -5.4e5;
 K_Ta = -2.7e5;
 K_Tq = -2.25e3;
 K_Td = 3.24e5;
 I    = 800;
 m    = 1e3;
 V    = 300;
-[num, den] = ord2(500, 1.2);
-H = tf(num, den);
+wn   = 500;
+z    = 1.2;
+H = tf(wn^2,[1, 2*z*wn, wn^2]);
 
 A = [-K_Fa/(m*V) 1;
     K_Ta/I K_Tq/I];
@@ -122,6 +156,7 @@ P = ss(A,B,C,D);
 Pa = tf(P(1));
 Pq = tf(P(2));
 
+Gd = feedback(C1*Pq,H);
 
 
 
