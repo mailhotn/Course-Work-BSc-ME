@@ -97,3 +97,31 @@ set_param('Q2_Part_b3','StopTime','1','AbsTol','1e-8','RelTol','1e-8');
 figure()
 plot(Sim_Out_y.time, Sim_Out_y.signals.values,...
     Sim_Out_u.time, Sim_Out_u.signals.values);
+
+%% Question 3
+
+K_Fa = 2.16e5;
+K_Fd = -5.4e4;
+K_Ta = -2.7e5;
+K_Tq = -2.25e3;
+K_Td = 3.24e5;
+I    = 800;
+m    = 1e3;
+V    = 300;
+[num, den] = ord2(500, 1.2);
+H = tf(num, den);
+
+A = [-K_Fa/(m*V) 1;
+    K_Ta/I K_Tq/I];
+B = [-K_Fd/(m*V) K_Td/I].';
+C = [K_Fa/m 0;
+    0   1];
+D = [K_Fd/m 0].';
+
+P = ss(A,B,C,D);
+Pa = tf(P(1));
+Pq = tf(P(2));
+
+
+
+
