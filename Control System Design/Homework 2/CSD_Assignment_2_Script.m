@@ -166,9 +166,9 @@ L2r = Pa*Gd*K3;
 L = K1*K2*K3/tf('s')*Pa + K1*(1+K2/tf('s'))*Pq;
 bode(L2r,L)
 
-load_system('Q3_a');
-set_param('Q3_a','StopTime','1','AbsTol','1e-8','RelTol','1e-8');
-sim('Q3_a');
+load_system('Q3_a_15');
+set_param('Q3_a_15','StopTime','1','AbsTol','1e-8','RelTol','1e-8');
+sim('Q3_a_15');
 figure()
 plot(Sim_Out.time, Sim_Out.signals.values);
 hold on
@@ -192,9 +192,9 @@ F = L*tf([1 0],[1e-3 1]);
 % F.P{1}(2) = [];
 % F.Z{1}(2) = [];
 % F.K = 0.2;
-load_system('Q3_b');
-set_param('Q3_b','StopTime','1','AbsTol','1e-8','RelTol','1e-8');
-sim('Q3_b');
+load_system('Q3_b_15');
+set_param('Q3_b_15','StopTime','1','AbsTol','1e-8','RelTol','1e-8');
+sim('Q3_b_15');
 plot(Sim_Out.time, Sim_Out.signals.values);
 xlabel('Time [sec]')
 ylabel('Acceleration [m/s^2]')
@@ -203,9 +203,9 @@ hold off
 info = stepinfo(Sim_Out.signals.values,Sim_Out.time);
 
 % Part b3 - Noise
-load_system('Q3_b3');
-set_param('Q3_b3','StopTime','0.1','AbsTol','1e-8','RelTol','1e-8');
-sim('Q3_b3');
+load_system('Q3_b3_15');
+set_param('Q3_b3_15','StopTime','0.1','AbsTol','1e-8','RelTol','1e-8');
+sim('Q3_b3_15');
 figure()
 plot(Sim_Out1.time, Sim_Out1.signals.values, Sim_Out.time, Sim_Out.signals.values, Sim_Out2.time, Sim_Out2.signals.values);
 xlabel('Time [sec]')
