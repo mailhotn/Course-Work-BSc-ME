@@ -132,9 +132,9 @@ plot(Sim_Out_y.time, Sim_Out_y.signals.values,...
     Sim_Out_u.time, Sim_Out_u.signals.values);
 
 %% Question 3
-
+% Given
 K_Fa = 2.16e5;
-K_Fd = -5.4e5;
+K_Fd = -5.4e4;
 K_Ta = -2.7e5;
 K_Tq = -2.25e3;
 K_Td = 3.24e5;
@@ -145,6 +145,7 @@ wn   = 500;
 z    = 1.2;
 H = tf(wn^2,[1, 2*z*wn, wn^2]);
 
+% Part a - Controller Design
 A = [-K_Fa/(m*V) 1;
     K_Ta/I K_Tq/I];
 B = [-K_Fd/(m*V) K_Td/I].';
@@ -155,8 +156,58 @@ D = [K_Fd/m 0].';
 P = ss(A,B,C,D);
 Pa = tf(P(1));
 Pq = tf(P(2));
+% sisotool
+% K1 = C2;
+% K2 =  C1.K/K1;
+load('Q3_a_K123.mat')
+Gd = minreal(K1*K2/(tf('s') + K1*Pq*H*(K2+tf('s'))));
+% sisotool(Pa*Gd)
+L2r = Pa*Gd*K3;
+L = K1*K2*K3/tf('s')*Pa + K1*(1+K2/tf('s'))*Pq;
+bode(L2r,L)
 
-Gd = feedback(C1*Pq,H);
+load_system('Q3_a');
+set_param('Q3_a','StopTime','1','AbsTol','1e-8','RelTol','1e-8');
+sim('Q3_a');
+figure()
+plot(Sim_Out.time, Sim_Out.signals.values);
+hold on
+info = stepinfo(Sim_Out.signals.values,Sim_Out.time);
 
+% Part b - Moved Sensor
+L = -0.7;
+A = [-K_Fa/(m*V) 1;
+    K_Ta/I K_Tq/I];
+B = [-K_Fd/(m*V) K_Td/I].';
+C = [K_Fa/m+L*K_Ta/I L*K_Tq/I;
+    0   1];
+D = [K_Fd/m+L*K_Td/I 0].';
 
+P = ss(A,B,C,D);
+Pa_m = tf(P(1));
+Pq = tf(P(2));
+Gd = minreal(K1*K2/(tf('s') + K1*Pq*H*(K2+tf('s'))));
+F = L*tf([1 0],[1e-3 1]);
+% F = zpk(minreal(Pa/Pa_m));
+% F.P{1}(2) = [];
+% F.Z{1}(2) = [];
+% F.K = 0.2;
+load_system('Q3_b');
+set_param('Q3_b','StopTime','1','AbsTol','1e-8','RelTol','1e-8');
+sim('Q3_b');
+plot(Sim_Out.time, Sim_Out.signals.values);
+xlabel('Time [sec]')
+ylabel('Acceleration [m/s^2]')
+legend('Sensor at COM','Sensor not at COM')
+hold off
+info = stepinfo(Sim_Out.signals.values,Sim_Out.time);
 
+% Part b3 - Noise
+load_system('Q3_b3');
+set_param('Q3_b3','StopTime','0.1','AbsTol','1e-8','RelTol','1e-8');
+sim('Q3_b3');
+figure()
+plot(Sim_Out1.time, Sim_Out1.signals.values, Sim_Out.time, Sim_Out.signals.values, Sim_Out2.time, Sim_Out2.signals.values);
+xlabel('Time [sec]')
+ylabel('Acceleration [m/s^2]')
+legend('Sensor at COM','Sensor not at COM','Noise')
