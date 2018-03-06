@@ -164,6 +164,7 @@ Gd = minreal(K1*K2/(tf('s') + K1*Pq*H*(K2+tf('s'))));
 % sisotool(Pa*Gd)
 L2r = Pa*Gd*K3;
 L = K1*K2*K3/tf('s')*Pa + K1*(1+K2/tf('s'))*Pq;
+figure()
 bode(L2r,L)
 
 load_system('Q3_a_15');
@@ -172,7 +173,7 @@ sim('Q3_a_15');
 figure()
 plot(Sim_Out.time, Sim_Out.signals.values);
 hold on
-info = stepinfo(Sim_Out.signals.values,Sim_Out.time);
+info = stepinfo(Sim_Out.signals.values,Sim_Out.time)
 
 % Part b - Moved Sensor
 L = -0.7;
@@ -186,12 +187,10 @@ D = [K_Fd/m+L*K_Td/I 0].';
 P = ss(A,B,C,D);
 Pa_m = tf(P(1));
 Pq = tf(P(2));
-Gd = minreal(K1*K2/(tf('s') + K1*Pq*H*(K2+tf('s'))));
-F = L*tf([1 0],[1e-3 1]);
-% F = zpk(minreal(Pa/Pa_m));
-% F.P{1}(2) = [];
-% F.Z{1}(2) = [];
-% F.K = 0.2;
+% Controller Correction
+K1_b = K1*(1-K2*K3*L);
+K2_b = K2/(1-K2*K3*L);
+% Simulation with Controller correction
 load_system('Q3_b_15');
 set_param('Q3_b_15','StopTime','1','AbsTol','1e-8','RelTol','1e-8');
 sim('Q3_b_15');
@@ -200,14 +199,10 @@ xlabel('Time [sec]')
 ylabel('Acceleration [m/s^2]')
 legend('Sensor at COM','Sensor not at COM')
 hold off
-info = stepinfo(Sim_Out.signals.values,Sim_Out.time);
-
-% Part b3 - Noise
-load_system('Q3_b3_15');
-set_param('Q3_b3_15','StopTime','0.1','AbsTol','1e-8','RelTol','1e-8');
-sim('Q3_b3_15');
+info = stepinfo(Sim_Out.signals.values,Sim_Out.time)
+% Stability margins with controller correction
+Gd = minreal(K1_b*K2_b/(tf('s') + K1_b*Pq*H*(K2_b+tf('s'))));
+L2r = Pa_m*Gd*K3;
+L = K1_b*K2_b*K3/tf('s')*Pa_m + K1_b*(1+K2_b/tf('s'))*Pq;
 figure()
-plot(Sim_Out1.time, Sim_Out1.signals.values, Sim_Out.time, Sim_Out.signals.values, Sim_Out2.time, Sim_Out2.signals.values);
-xlabel('Time [sec]')
-ylabel('Acceleration [m/s^2]')
-legend('Sensor at COM','Sensor not at COM','Noise')
+bode(L2r,L)
